@@ -1,0 +1,975 @@
+openapi: 3.0.3
+info:
+  title: Akazify Core API
+  version: 0.0.1
+  description: Manufacturing Execution System API compliant with ISA-95 standards
+servers:
+  - url: https://api.akazify.com
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  # Site Management
+  /v1/sites:
+    get:
+      summary: List sites
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: false
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+          required: false
+      responses:
+        '200':
+          description: A paginated list of sites
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Site'
+                  nextPage:
+                    type: integer
+                    nullable: true
+    post:
+      summary: Create a new site
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteCreate'
+      responses:
+        '201':
+          description: Site created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+
+  /v1/sites/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get site by ID
+      responses:
+        '200':
+          description: Site details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+        '404':
+          description: Site not found
+    put:
+      summary: Update site
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteUpdate'
+      responses:
+        '200':
+          description: Site updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+    delete:
+      summary: Delete site
+      responses:
+        '204':
+          description: Site deleted successfully
+
+  # Work Center Management
+  /v1/work-centers:
+    get:
+      summary: List work centers
+      parameters:
+        - in: query
+          name: siteId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+      responses:
+        '200':
+          description: A paginated list of work centers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkCenter'
+                  nextPage:
+                    type: integer
+                    nullable: true
+    post:
+      summary: Create a new work center
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkCenterCreate'
+      responses:
+        '201':
+          description: Work center created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkCenter'
+
+  # Product Management
+  /v1/products:
+    get:
+      summary: List products
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+      responses:
+        '200':
+          description: A paginated list of products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  nextPage:
+                    type: integer
+                    nullable: true
+    post:
+      summary: Create a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+
+  # Manufacturing Order Management
+  /v1/manufacturing-orders:
+    get:
+      summary: List manufacturing orders
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [PLANNED, RELEASED, IN_PROGRESS, COMPLETED, CANCELLED]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+      responses:
+        '200':
+          description: A paginated list of manufacturing orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ManufacturingOrder'
+                  nextPage:
+                    type: integer
+                    nullable: true
+    post:
+      summary: Create a new manufacturing order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufacturingOrderCreate'
+      responses:
+        '201':
+          description: Manufacturing order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManufacturingOrder'
+
+  /v1/manufacturing-orders/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get manufacturing order by ID
+      responses:
+        '200':
+          description: Manufacturing order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManufacturingOrder'
+        '404':
+          description: Manufacturing order not found
+    put:
+      summary: Update manufacturing order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufacturingOrderUpdate'
+      responses:
+        '200':
+          description: Manufacturing order updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManufacturingOrder'
+
+  # Equipment Management
+  /v1/equipment:
+    get:
+      summary: List equipment
+      parameters:
+        - in: query
+          name: workCenterId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [OPERATIONAL, DOWN, MAINTENANCE, OFFLINE]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+      responses:
+        '200':
+          description: A paginated list of equipment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Equipment'
+                  nextPage:
+                    type: integer
+                    nullable: true
+
+  # Inventory Management
+  /v1/inventory/lots:
+    get:
+      summary: List lots
+      parameters:
+        - in: query
+          name: productId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [AVAILABLE, QUARANTINED, EXPIRED, CONSUMED]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+      responses:
+        '200':
+          description: A paginated list of lots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Lot'
+                  nextPage:
+                    type: integer
+                    nullable: true
+
+  # Work Order Management (Maintenance)
+  /v1/work-orders:
+    get:
+      summary: List work orders
+      parameters:
+        - in: query
+          name: equipmentId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [OPEN, IN_PROGRESS, WAITING_PARTS, COMPLETED, CANCELLED]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+      responses:
+        '200':
+          description: A paginated list of work orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkOrder'
+                  nextPage:
+                    type: integer
+                    nullable: true
+    post:
+      summary: Create a new work order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkOrderCreate'
+components:
+  schemas:
+    # Base entity
+    BaseEntity:
+      type: object
+      required: [id, createdAt, updatedAt, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          minimum: 1
+
+    # Site Management
+    Site:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required: [name, code, isActive]
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+            code:
+              type: string
+              minLength: 1
+              maxLength: 20
+            description:
+              type: string
+            address:
+              type: string
+            region:
+              type: string
+            timezone:
+              type: string
+              default: "UTC"
+            isActive:
+              type: boolean
+              default: true
+
+    SiteCreate:
+      type: object
+      required: [name, code]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        description:
+          type: string
+        address:
+          type: string
+        region:
+          type: string
+        timezone:
+          type: string
+          default: "UTC"
+
+    SiteUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        description:
+          type: string
+        address:
+          type: string
+        region:
+          type: string
+        timezone:
+          type: string
+        isActive:
+          type: boolean
+
+    # Work Center Management
+    WorkCenter:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required: [areaId, name, code, category, isActive]
+          properties:
+            areaId:
+              type: string
+              format: uuid
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+            code:
+              type: string
+              minLength: 1
+              maxLength: 20
+            description:
+              type: string
+            category:
+              type: string
+              enum: [PRODUCTION, ASSEMBLY, PACKAGING, QUALITY, MAINTENANCE]
+            capacity:
+              type: number
+              minimum: 0
+            isActive:
+              type: boolean
+              default: true
+
+    WorkCenterCreate:
+      type: object
+      required: [areaId, name, code, category]
+      properties:
+        areaId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        description:
+          type: string
+        category:
+          type: string
+          enum: [PRODUCTION, ASSEMBLY, PACKAGING, QUALITY, MAINTENANCE]
+        capacity:
+          type: number
+          minimum: 0
+
+    # Product Management
+    Product:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required: [sku, name, uom, isActive]
+          properties:
+            sku:
+              type: string
+              minLength: 1
+              maxLength: 50
+            name:
+              type: string
+              minLength: 1
+              maxLength: 200
+            description:
+              type: string
+            category:
+              type: string
+            uom:
+              type: string
+              minLength: 1
+              maxLength: 20
+            weight:
+              type: number
+              minimum: 0
+            dimensions:
+              type: object
+              properties:
+                length:
+                  type: number
+                  minimum: 0
+                width:
+                  type: number
+                  minimum: 0
+                height:
+                  type: number
+                  minimum: 0
+                unit:
+                  type: string
+                  default: "mm"
+            isActive:
+              type: boolean
+              default: true
+
+    ProductCreate:
+      type: object
+      required: [sku, name, uom]
+      properties:
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 50
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        category:
+          type: string
+        uom:
+          type: string
+          minLength: 1
+          maxLength: 20
+        weight:
+          type: number
+          minimum: 0
+        dimensions:
+          type: object
+          properties:
+            length:
+              type: number
+              minimum: 0
+            width:
+              type: number
+              minimum: 0
+            height:
+              type: number
+              minimum: 0
+            unit:
+              type: string
+              default: "mm"
+
+    # Manufacturing Order Management
+    ManufacturingOrder:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required: [orderNumber, productId, quantity, uom, plannedStartDate, plannedEndDate, status, priority]
+          properties:
+            orderNumber:
+              type: string
+              minLength: 1
+              maxLength: 50
+            productId:
+              type: string
+              format: uuid
+            quantity:
+              type: number
+              minimum: 0
+            uom:
+              type: string
+              minLength: 1
+              maxLength: 20
+            bomId:
+              type: string
+              format: uuid
+            routingId:
+              type: string
+              format: uuid
+            plannedStartDate:
+              type: string
+              format: date-time
+            plannedEndDate:
+              type: string
+              format: date-time
+            actualStartDate:
+              type: string
+              format: date-time
+            actualEndDate:
+              type: string
+              format: date-time
+            status:
+              type: string
+              enum: [PLANNED, RELEASED, IN_PROGRESS, COMPLETED, CANCELLED]
+              default: "PLANNED"
+            priority:
+              type: integer
+              minimum: 1
+              maximum: 10
+              default: 5
+            notes:
+              type: string
+            isActive:
+              type: boolean
+              default: true
+
+    ManufacturingOrderCreate:
+      type: object
+      required: [orderNumber, productId, quantity, uom, plannedStartDate, plannedEndDate]
+      properties:
+        orderNumber:
+          type: string
+          minLength: 1
+          maxLength: 50
+        productId:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+          minimum: 0
+        uom:
+          type: string
+          minLength: 1
+          maxLength: 20
+        bomId:
+          type: string
+          format: uuid
+        routingId:
+          type: string
+          format: uuid
+        plannedStartDate:
+          type: string
+          format: date-time
+        plannedEndDate:
+          type: string
+          format: date-time
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+        notes:
+          type: string
+
+    ManufacturingOrderUpdate:
+      type: object
+      properties:
+        quantity:
+          type: number
+          minimum: 0
+        plannedStartDate:
+          type: string
+          format: date-time
+        plannedEndDate:
+          type: string
+          format: date-time
+        actualStartDate:
+          type: string
+          format: date-time
+        actualEndDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [PLANNED, RELEASED, IN_PROGRESS, COMPLETED, CANCELLED]
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+        notes:
+          type: string
+        isActive:
+          type: boolean
+
+    # Equipment Management
+    Equipment:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required: [workCenterId, name, code, equipmentType, status, isActive]
+          properties:
+            workCenterId:
+              type: string
+              format: uuid
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+            code:
+              type: string
+              minLength: 1
+              maxLength: 20
+            description:
+              type: string
+            equipmentType:
+              type: string
+              enum: [MACHINE, TOOL, SENSOR, CONVEYOR, ROBOT, OTHER]
+            model:
+              type: string
+            serialNumber:
+              type: string
+            manufacturer:
+              type: string
+            installationDate:
+              type: string
+              format: date
+            lastMaintenanceDate:
+              type: string
+              format: date
+            status:
+              type: string
+              enum: [OPERATIONAL, DOWN, MAINTENANCE, OFFLINE]
+              default: "OPERATIONAL"
+            isActive:
+              type: boolean
+              default: true
+
+    # Inventory Management
+    Lot:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required: [productId, lotNumber, quantity, uom, status]
+          properties:
+            productId:
+              type: string
+              format: uuid
+            lotNumber:
+              type: string
+              minLength: 1
+              maxLength: 50
+            quantity:
+              type: number
+              minimum: 0
+            uom:
+              type: string
+              minLength: 1
+              maxLength: 20
+            expiryDate:
+              type: string
+              format: date
+            manufactureDate:
+              type: string
+              format: date
+            supplierId:
+              type: string
+            status:
+              type: string
+              enum: [AVAILABLE, QUARANTINED, EXPIRED, CONSUMED]
+              default: "AVAILABLE"
+            isActive:
+              type: boolean
+              default: true
+
+    # Work Order Management (Maintenance)
+    WorkOrder:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required: [equipmentId, orderNumber, title, priority, workType, plannedStartDate, plannedEndDate, status]
+          properties:
+            equipmentId:
+              type: string
+              format: uuid
+            orderNumber:
+              type: string
+              minLength: 1
+              maxLength: 50
+            title:
+              type: string
+              minLength: 1
+              maxLength: 200
+            description:
+              type: string
+            priority:
+              type: string
+              enum: [LOW, MEDIUM, HIGH, CRITICAL]
+              default: "MEDIUM"
+            status:
+              type: string
+              enum: [OPEN, IN_PROGRESS, WAITING_PARTS, COMPLETED, CANCELLED]
+              default: "OPEN"
+            workType:
+              type: string
+              enum: [PREVENTIVE, CORRECTIVE, PREDICTIVE, INSPECTION]
+            plannedStartDate:
+              type: string
+              format: date-time
+            plannedEndDate:
+              type: string
+              format: date-time
+            actualStartDate:
+              type: string
+              format: date-time
+            actualEndDate:
+              type: string
+              format: date-time
+            estimatedHours:
+              type: number
+              minimum: 0
+            actualHours:
+              type: number
+              minimum: 0
+            isActive:
+              type: boolean
+              default: true
+
+    WorkOrderCreate:
+      type: object
+      required: [equipmentId, orderNumber, title, workType, plannedStartDate, plannedEndDate]
+      properties:
+        equipmentId:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+          minLength: 1
+          maxLength: 50
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+          default: "MEDIUM"
+        workType:
+          type: string
+          enum: [PREVENTIVE, CORRECTIVE, PREDICTIVE, INSPECTION]
+        plannedStartDate:
+          type: string
+          format: date-time
+        plannedEndDate:
+          type: string
+          format: date-time
+        estimatedHours:
+          type: number
+          minimum: 0
+
+    # Common response wrappers
+    PaginatedResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: {}
+        nextPage:
+          type: integer
+          nullable: true
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        details:
+          type: object

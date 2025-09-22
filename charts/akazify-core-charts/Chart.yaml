@@ -1,0 +1,15 @@
+apiVersion: v2
+name: akazify-core-charts
+version: 0.1.0
+appVersion: "0.0.1"
+description: Helm chart for deploying Akazify Core services
+home: https://akazify.com
+keywords:
+  - akazify
+  - mes
+  - factory
+  - core
+maintainers:
+  - name: Akazify
+    email: community@akazify.com
+type: application

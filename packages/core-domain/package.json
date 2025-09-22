@@ -1,0 +1,25 @@
+{
+  "name": "@akazify/core-domain",
+  "version": "0.0.1",
+  "description": "Shared domain schemas and validation for Akazify Core.",
+  "license": "Apache-2.0",
+  "private": false,
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "publishConfig": { "access": "public" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akazify/akazify-core"
+  },
+  "keywords": ["akazify", "domain", "schemas", "validation", "zod"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "echo 'TODO: test core-domain' && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "zod": "^3.22.4"
+  }
+}

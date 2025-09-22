@@ -1,0 +1,25 @@
+# Global owners for all files in the repository
+* @akazify/maintainers
+
+# Package-specific ownership
+/packages/core-domain/ @akazify/core-team
+/packages/core-sdk/ @akazify/core-team
+/packages/core-ui/ @akazify/frontend-team
+
+# Infrastructure and build
+/charts/ @akazify/devops-team
+/.github/ @akazify/maintainers
+/openapi/ @akazify/api-team
+
+# Documentation and governance
+/docs/ @akazify/maintainers
+/README.md @akazify/maintainers
+/CONTRIBUTING.md @akazify/maintainers
+/CODE_OF_CONDUCT.md @akazify/maintainers
+/SECURITY.md @akazify/maintainers
+
+# License and legal
+/LICENSE @akazify/maintainers
+/NOTICE @akazify/maintainers
+/DCO @akazify/maintainers
+/docs/licensing/ @akazify/maintainers

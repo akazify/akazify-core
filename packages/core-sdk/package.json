@@ -1,0 +1,25 @@
+{
+  "name": "@akazify/core-sdk",
+  "version": "0.0.1",
+  "description": "TypeScript SDK for Akazify Core APIs (generated from OpenAPI).",
+  "license": "Apache-2.0",
+  "private": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "publishConfig": { "access": "public" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akazify/akazify-core"
+  },
+  "keywords": ["akazify", "sdk", "api", "typescript"],
+  "scripts": {
+    "prebuild": "mkdir -p dist",
+    "gen": "openapi-typescript ../../openapi/core.yaml -o dist/index.d.ts",
+    "build": "pnpm run gen && node -e \"require('fs').mkdirSync('dist',{recursive:true});require('fs').writeFileSync('dist/index.js','module.exports = {};\\n');\"",
+    "test": "echo 'TODO: test core-sdk' && exit 0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^6.7.0"
+  }
+}
