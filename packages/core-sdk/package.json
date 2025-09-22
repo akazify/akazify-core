@@ -20,6 +20,6 @@
     "test": "echo 'TODO: test core-sdk' && exit 0"
   },
   "devDependencies": {
-    "openapi-typescript": "^6.7.0"
+    "openapi-typescript": "^7.9.1"
   }
 }
