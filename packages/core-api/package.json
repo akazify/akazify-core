@@ -43,7 +43,7 @@
     "tsx": "^4.6.2",
     "vitest": "^1.0.4",
     "@vitest/coverage-v8": "^1.0.4",
-    "@types/node": "^20.10.0",
+    "@types/node": "^24.5.2",
     "@types/pg": "^8.10.7",
     "@types/bcrypt": "^5.0.2"
   }
