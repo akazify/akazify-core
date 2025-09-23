@@ -22,17 +22,23 @@ export type DatabaseConfig = z.infer<typeof DatabaseConfigSchema>;
  * Load database configuration from environment variables
  */
 export function loadDatabaseConfig(): DatabaseConfig {
-  return DatabaseConfigSchema.parse({
+  const password = process.env.DATABASE_PASSWORD || 'akazify_dev_password';
+  console.log('Debug - Database password type:', typeof password, 'value:', password);
+  
+  const config = {
     host: process.env.DATABASE_HOST || 'localhost',
     port: parseInt(process.env.DATABASE_PORT || '5432'),
     database: process.env.DATABASE_NAME || 'akazify_core',
     username: process.env.DATABASE_USER || 'akazify',
-    password: process.env.DATABASE_PASSWORD || 'akazify_dev_password',
+    password: String(password),
     ssl: process.env.DATABASE_SSL === 'true',
     maxConnections: parseInt(process.env.DATABASE_MAX_CONNECTIONS || '20'),
     idleTimeoutMillis: parseInt(process.env.DATABASE_IDLE_TIMEOUT || '30000'),
     connectionTimeoutMillis: parseInt(process.env.DATABASE_CONNECTION_TIMEOUT || '2000'),
-  });
+  };
+  
+  console.log('Debug - Final config password type:', typeof config.password, 'value:', config.password);
+  return DatabaseConfigSchema.parse(config);
 }
 
 /**

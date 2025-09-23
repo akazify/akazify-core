@@ -75,7 +75,7 @@ const SiteStatisticsSchema = Type.Object({
  * Sites API routes
  */
 export default async function sitesRoutes(fastify: FastifyInstance) {
-  const siteRepository = new SiteRepository(fastify.pg);
+  const siteRepository = new SiteRepository(fastify.pg.pool);
 
   // GET /sites - List sites with pagination and filtering
   fastify.get('/sites', {

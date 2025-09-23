@@ -7,7 +7,7 @@ import fastifySwaggerUi from '@fastify/swagger-ui';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 
 // Configuration imports
-import { createDatabasePool, testDatabaseConnection, initializeTimescaleDB } from './config/database';
+import { createDatabasePool, testDatabaseConnection, initializeTimescaleDB, loadDatabaseConfig } from './config/database';
 import { createKafka, initializeKafkaTopics, ManufacturingEventProducer } from './config/kafka';
 import { createRedisClient, testRedisConnection, CacheService } from './config/redis';
 
@@ -76,12 +76,15 @@ async function registerPlugins(server: FastifyInstance, config: ServerConfig): P
   });
 
   // Database connection
-  const dbPool = createDatabasePool();
+  const dbConfig = loadDatabaseConfig();
+  const connectionString = `postgresql://${dbConfig.username}:${dbConfig.password}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`;
+  
   await server.register(fastifyPostgres, {
-    pool: dbPool,
+    connectionString: connectionString,
   });
 
   // Test database connection on startup
+  const dbPool = createDatabasePool(dbConfig);
   const isDbConnected = await testDatabaseConnection(dbPool);
   if (!isDbConnected) {
     throw new Error('Failed to connect to PostgreSQL database');

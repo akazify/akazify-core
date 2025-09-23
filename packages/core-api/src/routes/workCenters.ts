@@ -113,7 +113,7 @@ const WorkCenterStatisticsSchema = Type.Object({
  * Work Centers API routes
  */
 export default async function workCentersRoutes(fastify: FastifyInstance) {
-  const workCenterRepository = new WorkCenterRepository(fastify.pg);
+  const workCenterRepository = new WorkCenterRepository(fastify.pg.pool);
 
   // GET /work-centers - List work centers with pagination and filtering
   fastify.get('/work-centers', {

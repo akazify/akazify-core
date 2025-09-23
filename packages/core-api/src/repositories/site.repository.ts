@@ -24,7 +24,19 @@ export class SiteRepository extends BaseRepository<Site> {
    */
   async findByCode(code: string): Promise<Site | null> {
     const query = `
-      SELECT * FROM sites 
+      SELECT 
+        id,
+        name,
+        code,
+        description,
+        address,
+        region,
+        timezone,
+        is_active as "isActive",
+        created_at as "createdAt",
+        updated_at as "updatedAt",
+        version
+      FROM sites 
       WHERE code = $1 AND is_active = true
     `;
     const result = await this.executeQuery<Site>(query, [code]);
@@ -83,9 +95,21 @@ export class SiteRepository extends BaseRepository<Site> {
     const countResult = await this.executeQuery<{ total: string }>(countQuery, params);
     const total = parseInt(countResult.rows[0]?.total || '0');
 
-    // Main query with pagination
+    // Main query with pagination - map database columns to schema fields
     const dataQuery = `
-      SELECT * FROM sites 
+      SELECT 
+        id,
+        name,
+        code,
+        description,
+        address,
+        region,
+        timezone,
+        is_active as "isActive",
+        created_at as "createdAt",
+        updated_at as "updatedAt",
+        version
+      FROM sites 
       ${whereClause}
       ORDER BY ${sortBy} ${sortOrder}
       LIMIT $${paramIndex++} OFFSET $${paramIndex++}

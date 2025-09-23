@@ -49,7 +49,19 @@ export class WorkCenterRepository extends BaseRepository<WorkCenter> {
    */
   async findByCode(areaId: string, code: string): Promise<WorkCenter | null> {
     const query = `
-      SELECT * FROM work_centers 
+      SELECT 
+        id,
+        area_id as "areaId",
+        name,
+        code,
+        description,
+        category,
+        capacity,
+        is_active as "isActive",
+        created_at as "createdAt",
+        updated_at as "updatedAt",
+        version
+      FROM work_centers 
       WHERE area_id = $1 AND code = $2 AND is_active = true
     `;
     const result = await this.executeQuery<WorkCenter>(query, [areaId, code]);
@@ -121,7 +133,17 @@ export class WorkCenterRepository extends BaseRepository<WorkCenter> {
     // Main query with area information
     const dataQuery = `
       SELECT 
-        wc.*,
+        wc.id,
+        wc.area_id as "areaId",
+        wc.name,
+        wc.code,
+        wc.description,
+        wc.category,
+        wc.capacity,
+        wc.is_active as "isActive",
+        wc.created_at as "createdAt",
+        wc.updated_at as "updatedAt",
+        wc.version,
         a.id as area_id,
         a.name as area_name,
         a.code as area_code,
@@ -138,15 +160,15 @@ export class WorkCenterRepository extends BaseRepository<WorkCenter> {
     // Transform results to include area information
     const transformedData: WorkCenterWithArea[] = dataResult.rows.map(row => ({
       id: row.id,
-      areaId: row.area_id,
+      areaId: row.areaId,
       name: row.name,
       code: row.code,
       description: row.description,
       category: row.category,
       capacity: row.capacity,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      isActive: row.isActive,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
       version: row.version,
       area: {
         id: row.area_id,
@@ -176,7 +198,19 @@ export class WorkCenterRepository extends BaseRepository<WorkCenter> {
    */
   async findByArea(areaId: string): Promise<WorkCenter[]> {
     const query = `
-      SELECT * FROM work_centers 
+      SELECT 
+        id,
+        area_id as "areaId",
+        name,
+        code,
+        description,
+        category,
+        capacity,
+        is_active as "isActive",
+        created_at as "createdAt",
+        updated_at as "updatedAt",
+        version
+      FROM work_centers 
       WHERE area_id = $1 AND is_active = true
       ORDER BY name ASC
     `;
@@ -189,7 +223,19 @@ export class WorkCenterRepository extends BaseRepository<WorkCenter> {
    */
   async findByCategory(category: string): Promise<WorkCenter[]> {
     const query = `
-      SELECT * FROM work_centers 
+      SELECT 
+        id,
+        area_id as "areaId",
+        name,
+        code,
+        description,
+        category,
+        capacity,
+        is_active as "isActive",
+        created_at as "createdAt",
+        updated_at as "updatedAt",
+        version
+      FROM work_centers 
       WHERE category = $1 AND is_active = true
       ORDER BY name ASC
     `;
