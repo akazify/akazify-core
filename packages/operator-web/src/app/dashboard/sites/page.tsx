@@ -1,14 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Plus, Search, Filter, MoreHorizontal, Building2, MapPin } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Plus, Search, Filter, MoreHorizontal, Building2, MapPin, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { StatusIndicator } from '@/components/ui/status-indicator'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { Modal } from '@/components/ui/modal'
+import { SiteForm } from '@/components/forms/site-form'
 import { sitesApi, queryKeys, type SiteFilters } from '@/lib/api'
 import { Site } from '@akazify/core-domain'
 
@@ -20,6 +22,12 @@ export default function SitesPage() {
     sortOrder: 'ASC',
   })
   const [searchQuery, setSearchQuery] = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [selectedSite, setSelectedSite] = useState<Site | null>(null)
+  
+  const queryClient = useQueryClient()
 
   // Fetch sites data
   const { data: sitesData, isLoading, error } = useQuery({
@@ -33,6 +41,33 @@ export default function SitesPage() {
     queryFn: sitesApi.getStatistics,
   })
 
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: sitesApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.sites.all })
+      setShowCreateModal(false)
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => sitesApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.sites.all })
+      setShowEditModal(false)
+      setSelectedSite(null)
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: sitesApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.sites.all })
+      setShowDeleteModal(false)
+      setSelectedSite(null)
+    },
+  })
+
   const handleSearch = (query: string) => {
     setSearchQuery(query)
     setFilters(prev => ({
@@ -44,6 +79,33 @@ export default function SitesPage() {
 
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, page }))
+  }
+
+  // CRUD handlers
+  const handleCreateSite = (data: any) => {
+    createMutation.mutate(data)
+  }
+
+  const handleEditSite = (site: Site) => {
+    setSelectedSite(site)
+    setShowEditModal(true)
+  }
+
+  const handleUpdateSite = (data: any) => {
+    if (selectedSite) {
+      updateMutation.mutate({ id: selectedSite.id, data })
+    }
+  }
+
+  const handleDeleteSite = (site: Site) => {
+    setSelectedSite(site)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = () => {
+    if (selectedSite) {
+      deleteMutation.mutate(selectedSite.id)
+    }
   }
 
   if (isLoading) {
@@ -87,7 +149,7 @@ export default function SitesPage() {
             Manage and monitor your manufacturing facilities
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Site
         </Button>
@@ -180,9 +242,35 @@ export default function SitesPage() {
                       />
                       <CardTitle className="text-base">{site.name}</CardTitle>
                     </div>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    <div className="relative group">
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                      <div className="absolute right-0 top-8 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                        <div className="py-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEditSite(site)
+                            }}
+                            className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Site
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteSite(site)
+                            }}
+                            className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Site
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Badge variant="outline" className="text-xs">
@@ -229,7 +317,7 @@ export default function SitesPage() {
                   : 'Get started by adding your first manufacturing site.'
                 }
               </p>
-              <Button>
+              <Button onClick={() => setShowCreateModal(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Site
               </Button>
@@ -266,6 +354,84 @@ export default function SitesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create Site Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create New Site"
+        size="lg"
+      >
+        <SiteForm
+          mode="create"
+          onSubmit={handleCreateSite}
+          onCancel={() => setShowCreateModal(false)}
+          isLoading={createMutation.isPending}
+        />
+      </Modal>
+
+      {/* Edit Site Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false)
+          setSelectedSite(null)
+        }}
+        title="Edit Site"
+        size="lg"
+      >
+        {selectedSite && (
+          <SiteForm
+            mode="edit"
+            initialData={selectedSite}
+            onSubmit={handleUpdateSite}
+            onCancel={() => {
+              setShowEditModal(false)
+              setSelectedSite(null)
+            }}
+            isLoading={updateMutation.isPending}
+          />
+        )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false)
+          setSelectedSite(null)
+        }}
+        title="Delete Site"
+        size="sm"
+      >
+        {selectedSite && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Are you sure you want to delete <strong>{selectedSite.name}</strong>? 
+              This action cannot be undone and will remove all associated data.
+            </p>
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setSelectedSite(null)
+                }}
+                disabled={deleteMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDelete}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete Site'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

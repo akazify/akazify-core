@@ -1,14 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Plus, Search, Filter, MoreHorizontal, Settings, Activity, Building2 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Plus, Search, Filter, MoreHorizontal, Settings, Activity, Building2, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { StatusIndicator } from '@/components/ui/status-indicator'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { Modal } from '@/components/ui/modal'
+import { WorkCenterForm } from '@/components/forms/work-center-form'
 import { workCentersApi, queryKeys, type WorkCenterFilters } from '@/lib/api'
 
 export default function WorkCentersPage() {
@@ -19,6 +21,12 @@ export default function WorkCentersPage() {
     sortOrder: 'ASC',
   })
   const [searchQuery, setSearchQuery] = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [selectedWorkCenter, setSelectedWorkCenter] = useState<any>(null)
+  
+  const queryClient = useQueryClient()
 
   // Fetch work centers data
   const { data: workCentersData, isLoading, error } = useQuery({
@@ -38,6 +46,33 @@ export default function WorkCentersPage() {
     queryFn: () => workCentersApi.getCapacityMetrics(),
   })
 
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: workCentersApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.workCenters.all })
+      setShowCreateModal(false)
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => workCentersApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.workCenters.all })
+      setShowEditModal(false)
+      setSelectedWorkCenter(null)
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: workCentersApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.workCenters.all })
+      setShowDeleteModal(false)
+      setSelectedWorkCenter(null)
+    },
+  })
+
   const handleSearch = (query: string) => {
     setSearchQuery(query)
     setFilters(prev => ({
@@ -49,6 +84,43 @@ export default function WorkCentersPage() {
 
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, page }))
+  }
+
+  // CRUD handlers
+  const handleCreateWorkCenter = (data: any) => {
+    // Format data for API (remove siteId since area implies site, convert capacity to number)
+    const apiData = {
+      areaId: data.areaId,
+      name: data.name,
+      code: data.code,
+      description: data.description,
+      category: data.category,
+      capacity: data.capacity ? Number(data.capacity) : undefined,
+      isActive: true
+    }
+    createMutation.mutate(apiData)
+  }
+
+  const handleEditWorkCenter = (workCenter: any) => {
+    setSelectedWorkCenter(workCenter)
+    setShowEditModal(true)
+  }
+
+  const handleUpdateWorkCenter = (data: any) => {
+    if (selectedWorkCenter) {
+      updateMutation.mutate({ id: selectedWorkCenter.id, data })
+    }
+  }
+
+  const handleDeleteWorkCenter = (workCenter: any) => {
+    setSelectedWorkCenter(workCenter)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = () => {
+    if (selectedWorkCenter) {
+      deleteMutation.mutate(selectedWorkCenter.id)
+    }
   }
 
   const getCategoryColor = (category: string) => {
@@ -110,7 +182,7 @@ export default function WorkCentersPage() {
             Manage production work centers and monitor capacity utilization
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Work Center
         </Button>
@@ -209,9 +281,35 @@ export default function WorkCentersPage() {
                         />
                         <CardTitle className="text-base">{workCenter.name}</CardTitle>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <div className="relative group">
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                        <div className="absolute right-0 top-8 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                          <div className="py-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleEditWorkCenter(workCenter)
+                              }}
+                              className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Work Center
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteWorkCenter(workCenter)
+                              }}
+                              className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Work Center
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className="text-xs">
@@ -295,7 +393,7 @@ export default function WorkCentersPage() {
                   : 'Get started by adding your first work center.'
                 }
               </p>
-              <Button>
+              <Button onClick={() => setShowCreateModal(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Work Center
               </Button>
@@ -332,6 +430,84 @@ export default function WorkCentersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create Work Center Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create New Work Center"
+        size="lg"
+      >
+        <WorkCenterForm
+          mode="create"
+          onSubmit={handleCreateWorkCenter}
+          onCancel={() => setShowCreateModal(false)}
+          isLoading={createMutation.isPending}
+        />
+      </Modal>
+
+      {/* Edit Work Center Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false)
+          setSelectedWorkCenter(null)
+        }}
+        title="Edit Work Center"
+        size="lg"
+      >
+        {selectedWorkCenter && (
+          <WorkCenterForm
+            mode="edit"
+            initialData={selectedWorkCenter}
+            onSubmit={handleUpdateWorkCenter}
+            onCancel={() => {
+              setShowEditModal(false)
+              setSelectedWorkCenter(null)
+            }}
+            isLoading={updateMutation.isPending}
+          />
+        )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false)
+          setSelectedWorkCenter(null)
+        }}
+        title="Delete Work Center"
+        size="sm"
+      >
+        {selectedWorkCenter && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Are you sure you want to delete <strong>{selectedWorkCenter.name}</strong>? 
+              This action cannot be undone and will remove all associated data.
+            </p>
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setSelectedWorkCenter(null)
+                }}
+                disabled={deleteMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDelete}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete Work Center'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

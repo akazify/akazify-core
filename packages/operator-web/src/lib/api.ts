@@ -4,7 +4,7 @@ import { Site, WorkCenter } from '@akazify/core-domain'
 /**
  * API configuration
  */
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 const API_VERSION = 'v1'
 
 /**
@@ -255,6 +255,71 @@ export const workCentersApi = {
 }
 
 /**
+ * Areas API (nested under sites)
+ */
+export interface Area {
+  id: string
+  siteId: string
+  name: string
+  code: string
+  description?: string
+  parentAreaId?: string
+  level: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  version: number
+}
+
+export interface AreaFilters {
+  level?: number
+  parentAreaId?: string
+}
+
+export const areasApi = {
+  /**
+   * Get all areas for a specific site
+   */
+  getBySite: async (siteId: string, filters: AreaFilters = {}): Promise<PaginatedResponse<Area>> => {
+    const response: AxiosResponse<PaginatedResponse<Area>> = await apiClient.get(`/sites/${siteId}/areas`, {
+      params: filters,
+    })
+    return response.data
+  },
+
+  /**
+   * Get area by ID within a site
+   */
+  getBySiteAndId: async (siteId: string, areaId: string): Promise<Area> => {
+    const response: AxiosResponse<Area> = await apiClient.get(`/sites/${siteId}/areas/${areaId}`)
+    return response.data
+  },
+
+  /**
+   * Create new area in a site
+   */
+  createInSite: async (siteId: string, data: Omit<Area, 'id' | 'siteId' | 'createdAt' | 'updatedAt' | 'version'>): Promise<Area> => {
+    const response: AxiosResponse<Area> = await apiClient.post(`/sites/${siteId}/areas`, data)
+    return response.data
+  },
+
+  /**
+   * Update area in a site
+   */
+  updateInSite: async (siteId: string, areaId: string, data: Partial<Omit<Area, 'id' | 'siteId' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<Area> => {
+    const response: AxiosResponse<Area> = await apiClient.put(`/sites/${siteId}/areas/${areaId}`, data)
+    return response.data
+  },
+
+  /**
+   * Delete area from a site
+   */
+  deleteFromSite: async (siteId: string, areaId: string): Promise<void> => {
+    await apiClient.delete(`/sites/${siteId}/areas/${areaId}`)
+  },
+}
+
+/**
  * Health Check API
  */
 export interface HealthStatus {
@@ -298,6 +363,12 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.workCenters.details(), id] as const,
     statistics: () => [...queryKeys.workCenters.all, 'statistics'] as const,
     capacityMetrics: (workCenterId?: string) => [...queryKeys.workCenters.all, 'capacity', workCenterId] as const,
+  },
+  areas: {
+    all: ['areas'] as const,
+    bySite: (siteId: string) => [...queryKeys.areas.all, 'site', siteId] as const,
+    list: (siteId: string, filters: AreaFilters) => [...queryKeys.areas.bySite(siteId), 'list', filters] as const,
+    detail: (siteId: string, areaId: string) => [...queryKeys.areas.bySite(siteId), 'detail', areaId] as const,
   },
   health: {
     all: ['health'] as const,

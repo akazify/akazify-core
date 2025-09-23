@@ -29,6 +29,11 @@ const navigation = [
     icon: Building2,
   },
   {
+    name: 'Areas',
+    href: '/dashboard/areas',
+    icon: MapPin,
+  },
+  {
     name: 'Work Centers',
     href: '/dashboard/work-centers',
     icon: Settings,
