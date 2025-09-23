@@ -6,13 +6,24 @@
   "private": false,
   "main": "dist/server.js",
   "types": "dist/server.d.ts",
-  "files": ["dist"],
-  "publishConfig": { "access": "public" },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/akazify/akazify-core"
   },
-  "keywords": ["akazify", "api", "mes", "manufacturing", "fastapi", "rest"],
+  "keywords": [
+    "akazify",
+    "api",
+    "mes",
+    "manufacturing",
+    "fastapi",
+    "rest"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx watch src/server.ts",
@@ -24,27 +35,28 @@
     "db:reset": "tsx src/database/reset.ts"
   },
   "dependencies": {
-    "fastify": "^4.24.3",
+    "@akazify/core-domain": "workspace:*",
     "@fastify/cors": "^8.4.0",
     "@fastify/helmet": "^11.1.1",
     "@fastify/jwt": "^7.2.4",
+    "@fastify/postgres": "^5.2.2",
     "@fastify/swagger": "^8.12.0",
     "@fastify/swagger-ui": "^1.10.0",
     "@fastify/type-provider-typebox": "^3.5.0",
-    "pg": "^8.11.3",
-    "kafkajs": "^2.2.4",
-    "redis": "^4.6.10",
     "bcrypt": "^5.1.1",
-    "zod": "^3.22.4",
-    "@akazify/core-domain": "workspace:*"
+    "fastify": "^4.24.3",
+    "kafkajs": "^2.2.4",
+    "pg": "^8.11.3",
+    "redis": "^4.6.10",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "tsx": "^4.6.2",
-    "vitest": "^1.0.4",
-    "@vitest/coverage-v8": "^1.0.4",
+    "@types/bcrypt": "^5.0.2",
     "@types/node": "^20.10.0",
     "@types/pg": "^8.10.7",
-    "@types/bcrypt": "^5.0.2"
+    "@vitest/coverage-v8": "^1.0.4",
+    "tsx": "^4.6.2",
+    "typescript": "^5.4.0",
+    "vitest": "^1.0.4"
   }
 }

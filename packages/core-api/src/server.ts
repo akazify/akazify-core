@@ -46,7 +46,6 @@ async function createServer(): Promise<FastifyInstance> {
   const server = Fastify({
     logger: {
       level: config.logLevel,
-      prettyPrint: config.environment === 'development',
     },
   }).withTypeProvider<TypeBoxTypeProvider>();
 
