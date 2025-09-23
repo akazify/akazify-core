@@ -1,0 +1,102 @@
+{
+  "name": "Akazify Operator",
+  "short_name": "Akazify",
+  "description": "Manufacturing Execution System - Operator Interface for factory floor operations, equipment monitoring, and production management",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0066cc",
+  "orientation": "landscape-primary",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Manufacturing overview and key metrics",
+      "url": "/dashboard",
+      "icons": [{ "src": "/shortcuts/dashboard-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Sites",
+      "short_name": "Sites",
+      "description": "Manage manufacturing sites",
+      "url": "/dashboard/sites",
+      "icons": [{ "src": "/shortcuts/sites-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Work Centers",
+      "short_name": "Work Centers",
+      "description": "Monitor work center capacity and operations",
+      "url": "/dashboard/work-centers",
+      "icons": [{ "src": "/shortcuts/work-centers-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Manufacturing Orders",
+      "short_name": "MO",
+      "description": "View and manage manufacturing orders",
+      "url": "/dashboard/manufacturing-orders",
+      "icons": [{ "src": "/shortcuts/orders-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Manufacturing Dashboard - Wide View"
+    },
+    {
+      "src": "/screenshots/dashboard-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Manufacturing Dashboard - Mobile View"
+    }
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "akazify",
+      "url": "/dashboard?action=%s"
+    }
+  ]
+}

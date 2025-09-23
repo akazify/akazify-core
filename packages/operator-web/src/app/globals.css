@@ -1,0 +1,314 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Manufacturing-specific components */
+  
+  /* Status indicators */
+  .status-indicator {
+    @apply inline-flex items-center justify-center w-3 h-3 rounded-full;
+  }
+  
+  .status-operational {
+    @apply bg-status-operational animate-pulse-operational;
+  }
+  
+  .status-warning {
+    @apply bg-status-warning;
+  }
+  
+  .status-alarm {
+    @apply bg-status-alarm animate-blink-alarm;
+  }
+  
+  .status-offline {
+    @apply bg-status-offline;
+  }
+  
+  .status-maintenance {
+    @apply bg-status-maintenance;
+  }
+
+  /* Card components for manufacturing data */
+  .manufacturing-card {
+    @apply bg-card text-card-foreground rounded-lg border shadow-card hover:shadow-card-hover transition-shadow duration-200;
+  }
+
+  .metrics-card {
+    @apply manufacturing-card p-6;
+  }
+
+  .equipment-card {
+    @apply manufacturing-card p-4 hover:bg-accent/50 transition-colors duration-200;
+  }
+
+  /* Dashboard layout components */
+  .dashboard-header {
+    @apply sticky top-0 z-40 border-b bg-background/80 backdrop-blur-sm;
+  }
+
+  .dashboard-sidebar {
+    @apply hidden border-r bg-muted/20 md:flex md:flex-col md:w-64 lg:w-72;
+  }
+
+  .dashboard-main {
+    @apply flex-1 overflow-auto p-6;
+  }
+
+  /* Manufacturing-specific form styles */
+  .manufacturing-form {
+    @apply space-y-6;
+  }
+
+  .form-group {
+    @apply space-y-2;
+  }
+
+  .form-label {
+    @apply text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+  }
+
+  .form-input {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* Table styles for manufacturing data */
+  .manufacturing-table {
+    @apply w-full border-collapse border-spacing-0;
+  }
+
+  .manufacturing-table th {
+    @apply border-b border-border bg-muted/50 px-4 py-3 text-left text-sm font-medium text-muted-foreground;
+  }
+
+  .manufacturing-table td {
+    @apply border-b border-border px-4 py-3 text-sm;
+  }
+
+  .manufacturing-table tr:hover {
+    @apply bg-muted/30;
+  }
+
+  /* Responsive utilities for manufacturing displays */
+  .manufacturing-grid {
+    @apply grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .equipment-grid {
+    @apply grid gap-4 grid-cols-equipment-grid;
+  }
+
+  .metrics-grid {
+    @apply grid gap-4 grid-cols-metrics-grid;
+  }
+
+  /* Touch-friendly controls for factory floor tablets */
+  .touch-control {
+    @apply min-h-[44px] min-w-[44px] touch-manipulation;
+  }
+
+  .touch-button {
+    @apply touch-control px-6 py-3 text-base font-medium;
+  }
+
+  /* High contrast mode for industrial environments */
+  .high-contrast {
+    --border: 0 0% 20%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 0 0% 100%;
+  }
+
+  /* Loading states for manufacturing data */
+  .loading-skeleton {
+    @apply animate-pulse bg-muted rounded;
+  }
+
+  .loading-shimmer {
+    @apply relative overflow-hidden bg-muted;
+  }
+
+  .loading-shimmer::after {
+    @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-background/60 to-transparent;
+    content: '';
+    animation: shimmer 2s infinite;
+  }
+}
+
+@layer utilities {
+  /* Manufacturing-specific utilities */
+  
+  /* Equipment status colors */
+  .text-status-operational { @apply text-status-operational; }
+  .text-status-warning { @apply text-status-warning; }
+  .text-status-alarm { @apply text-status-alarm; }
+  .text-status-offline { @apply text-status-offline; }
+  .text-status-maintenance { @apply text-status-maintenance; }
+
+  .bg-status-operational { @apply bg-status-operational; }
+  .bg-status-warning { @apply bg-status-warning; }
+  .bg-status-alarm { @apply bg-status-alarm; }
+  .bg-status-offline { @apply bg-status-offline; }
+  .bg-status-maintenance { @apply bg-status-maintenance; }
+
+  /* Hierarchy colors */
+  .text-hierarchy-site { @apply text-hierarchy-site; }
+  .text-hierarchy-area { @apply text-hierarchy-area; }
+  .text-hierarchy-workCenter { @apply text-hierarchy-workCenter; }
+  .text-hierarchy-equipment { @apply text-hierarchy-equipment; }
+
+  /* Scroll utilities for long manufacturing lists */
+  .scroll-area {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground)) transparent;
+  }
+
+  .scroll-area::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scroll-area::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 3px;
+  }
+
+  .scroll-area::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--foreground));
+  }
+
+  /* Focus utilities for accessibility */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Safe area utilities for mobile/tablet displays */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Custom animations */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Print styles for manufacturing reports */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    @apply text-black bg-white;
+  }
+
+  .manufacturing-card {
+    @apply border-black shadow-none;
+  }
+
+  .status-indicator {
+    @apply border border-black;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-operational,
+  .animate-blink-alarm,
+  .animate-spin,
+  .animate-bounce {
+    animation: none;
+  }
+  
+  .transition-all,
+  .transition-colors,
+  .transition-transform,
+  .transition-opacity {
+    transition: none;
+  }
+}
