@@ -1,7 +1,8 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { Type } from '@fastify/type-provider-typebox';
 import { SiteRepository } from '../repositories/site.repository';
-import { SiteSchema } from '@akazify/core-domain';
+import { AreaRepository } from '../repositories/area.repository';
+import { SiteSchema, AreaSchema } from '@akazify/core-domain';
 import { z } from 'zod';
 
 // Request/Response schemas using TypeBox for Fastify
@@ -46,6 +47,49 @@ const SiteIdParams = Type.Object({
   id: Type.String({ format: 'uuid' }),
 });
 
+// Area schemas for nested routes
+const AreaResponseSchema = Type.Object({
+  id: Type.String({ format: 'uuid' }),
+  siteId: Type.String({ format: 'uuid' }),
+  name: Type.String({ maxLength: 100 }),
+  code: Type.String({ maxLength: 20 }),
+  description: Type.Optional(Type.String()),
+  parentAreaId: Type.Optional(Type.String({ format: 'uuid' })),
+  level: Type.Integer({ minimum: 1, maximum: 5 }),
+  isActive: Type.Boolean({ default: true }),
+  createdAt: Type.String({ format: 'date-time' }),
+  updatedAt: Type.String({ format: 'date-time' }),
+  version: Type.Integer({ minimum: 1 }),
+});
+
+const CreateAreaSchema = Type.Object({
+  name: Type.String({ minLength: 1, maxLength: 100 }),
+  code: Type.String({ minLength: 1, maxLength: 20 }),
+  description: Type.Optional(Type.String()),
+  parentAreaId: Type.Optional(Type.String({ format: 'uuid' })),
+  level: Type.Integer({ minimum: 1, maximum: 5, default: 1 }),
+  isActive: Type.Optional(Type.Boolean({ default: true })),
+});
+
+const UpdateAreaSchema = Type.Partial(CreateAreaSchema);
+
+const AreaIdParams = Type.Object({
+  siteId: Type.String({ format: 'uuid' }),
+  areaId: Type.String({ format: 'uuid' }),
+});
+
+const PaginatedAreaResponseSchema = Type.Object({
+  data: Type.Array(AreaResponseSchema),
+  pagination: Type.Object({
+    page: Type.Integer(),
+    limit: Type.Integer(),
+    total: Type.Integer(),
+    totalPages: Type.Integer(),
+    hasNext: Type.Boolean(),
+    hasPrev: Type.Boolean(),
+  }),
+});
+
 const PaginatedSiteResponseSchema = Type.Object({
   data: Type.Array(SiteResponseSchema),
   pagination: Type.Object({
@@ -76,6 +120,7 @@ const SiteStatisticsSchema = Type.Object({
  */
 export default async function sitesRoutes(fastify: FastifyInstance) {
   const siteRepository = new SiteRepository(fastify.pg.pool);
+  const areaRepository = new AreaRepository(fastify.pg.pool);
 
   // GET /sites - List sites with pagination and filtering
   fastify.get('/sites', {
@@ -380,6 +425,101 @@ export default async function sitesRoutes(fastify: FastifyInstance) {
         error: 'Internal Server Error',
         message: 'Failed to delete site'
       });
+    }
+  });
+
+  // GET /sites/:siteId/areas - List areas in site
+  fastify.get('/sites/:siteId/areas', {
+    schema: {
+      tags: ['Sites', 'Areas'],
+      params: Type.Object({ siteId: Type.String({ format: 'uuid' }) }),
+      response: { 200: PaginatedAreaResponseSchema },
+    },
+  }, async (request: FastifyRequest<{ Params: { siteId: string } }>, reply: FastifyReply) => {
+    try {
+      const { siteId } = request.params;
+      const result = await areaRepository.findBySite(siteId);
+      return reply.code(200).send(result);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal Server Error', message: 'Failed to retrieve areas' });
+    }
+  });
+
+  // POST /sites/:siteId/areas - Create area in site  
+  fastify.post('/sites/:siteId/areas', {
+    schema: {
+      tags: ['Sites', 'Areas'],
+      params: Type.Object({ siteId: Type.String({ format: 'uuid' }) }),
+      body: CreateAreaSchema,
+      response: { 201: AreaResponseSchema },
+    },
+  }, async (request: FastifyRequest<{ Params: { siteId: string }; Body: any }>, reply: FastifyReply) => {
+    try {
+      const { siteId } = request.params;
+      const areaData = request.body;
+      const newArea = await areaRepository.createInSite(siteId, areaData);
+      return reply.code(201).send(newArea);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal Server Error', message: 'Failed to create area' });
+    }
+  });
+
+  // PUT /sites/:siteId/areas/:areaId - Update area
+  fastify.put('/sites/:siteId/areas/:areaId', {
+    schema: {
+      tags: ['Sites', 'Areas'],
+      params: AreaIdParams,
+      body: UpdateAreaSchema,
+      response: { 200: AreaResponseSchema },
+    },
+  }, async (request: FastifyRequest<{ Params: { siteId: string; areaId: string }; Body: any }>, reply: FastifyReply) => {
+    try {
+      const { siteId, areaId } = request.params;
+      const updateData = request.body;
+      
+      // Verify area belongs to this site
+      const existingArea = await areaRepository.findById(areaId);
+      if (!existingArea || existingArea.siteId !== siteId) {
+        return reply.code(404).send({ error: 'Not Found', message: 'Area not found in this site' });
+      }
+      
+      const updatedArea = await areaRepository.update(areaId, updateData);
+      return reply.code(200).send(updatedArea);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal Server Error', message: 'Failed to update area' });
+    }
+  });
+
+  // DELETE /sites/:siteId/areas/:areaId - Delete area
+  fastify.delete('/sites/:siteId/areas/:areaId', {
+    schema: {
+      tags: ['Sites', 'Areas'],
+      params: AreaIdParams,
+      response: { 204: Type.Null() },
+    },
+  }, async (request: FastifyRequest<{ Params: { siteId: string; areaId: string } }>, reply: FastifyReply) => {
+    try {
+      const { siteId, areaId } = request.params;
+      
+      // Verify area belongs to this site and can be deleted
+      const existingArea = await areaRepository.findById(areaId);
+      if (!existingArea || existingArea.siteId !== siteId) {
+        return reply.code(404).send({ error: 'Not Found', message: 'Area not found in this site' });
+      }
+      
+      const canDelete = await areaRepository.canDelete(areaId);
+      if (!canDelete) {
+        return reply.code(400).send({ error: 'Bad Request', message: 'Cannot delete area with active work centers or child areas' });
+      }
+      
+      await areaRepository.delete(areaId);
+      return reply.code(204).send();
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({ error: 'Internal Server Error', message: 'Failed to delete area' });
     }
   });
 }

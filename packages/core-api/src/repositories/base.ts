@@ -95,7 +95,8 @@ export abstract class BaseRepository<T extends BaseEntity> {
       WHERE id = $1 AND is_active = true
     `;
     const result = await this.executeQuery<T>(query, [id]);
-    return result.rows[0] || null;
+    // Convert result back to camelCase
+    return result.rows[0] ? this.convertKeysToCamelCase(result.rows[0]) : null;
   }
 
   /**
@@ -155,7 +156,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: dataResult.rows,
+      data: dataResult.rows.map(row => this.convertKeysToCamelCase(row)),
       pagination: {
         page,
         limit,
@@ -168,11 +169,49 @@ export abstract class BaseRepository<T extends BaseEntity> {
   }
 
   /**
+   * Convert camelCase to snake_case
+   */
+  private toSnakeCase(str: string): string {
+    return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+  }
+
+  /**
+   * Convert snake_case to camelCase
+   */
+  private toCamelCase(str: string): string {
+    return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  }
+
+  /**
+   * Convert object keys from camelCase to snake_case
+   */
+  private convertKeysToSnakeCase(obj: any): any {
+    const converted: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      converted[this.toSnakeCase(key)] = value;
+    }
+    return converted;
+  }
+
+  /**
+   * Convert object keys from snake_case to camelCase
+   */
+  private convertKeysToCamelCase(obj: any): any {
+    const converted: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      converted[this.toCamelCase(key)] = value;
+    }
+    return converted;
+  }
+
+  /**
    * Create new entity
    */
   async create(data: Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'version'>): Promise<T> {
-    const columns = Object.keys(data);
-    const values = Object.values(data);
+    // Convert camelCase keys to snake_case for database
+    const dbData = this.convertKeysToSnakeCase(data);
+    const columns = Object.keys(dbData);
+    const values = Object.values(dbData);
     const placeholders = values.map((_, index) => `$${index + 1}`).join(', ');
 
     const query = `
@@ -182,15 +221,18 @@ export abstract class BaseRepository<T extends BaseEntity> {
     `;
 
     const result = await this.executeQuery<T>(query, values);
-    return result.rows[0];
+    // Convert result back to camelCase
+    return this.convertKeysToCamelCase(result.rows[0]);
   }
 
   /**
    * Update entity by ID
    */
   async update(id: string, data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<T | null> {
-    const columns = Object.keys(data);
-    const values = Object.values(data);
+    // Convert camelCase keys to snake_case for database
+    const dbData = this.convertKeysToSnakeCase(data);
+    const columns = Object.keys(dbData);
+    const values = Object.values(dbData);
     
     if (columns.length === 0) {
       return this.findById(id);
@@ -200,13 +242,14 @@ export abstract class BaseRepository<T extends BaseEntity> {
     
     const query = `
       UPDATE ${this.tableName} 
-      SET ${setClause}
+      SET ${setClause}, updated_at = NOW()
       WHERE id = $1 AND is_active = true
       RETURNING *
     `;
 
     const result = await this.executeQuery<T>(query, [id, ...values]);
-    return result.rows[0] || null;
+    // Convert result back to camelCase
+    return result.rows[0] ? this.convertKeysToCamelCase(result.rows[0]) : null;
   }
 
   /**

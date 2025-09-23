@@ -31,7 +31,7 @@ interface ServerConfig {
 function loadServerConfig(): ServerConfig {
   return {
     host: process.env.SERVER_HOST || '0.0.0.0',
-    port: parseInt(process.env.SERVER_PORT || '3000'),
+    port: parseInt(process.env.SERVER_PORT || '3001'),
     logLevel: process.env.LOG_LEVEL || 'info',
     environment: process.env.NODE_ENV || 'development',
   };
