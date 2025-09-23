@@ -255,6 +255,30 @@ export const workCentersApi = {
 }
 
 /**
+ * Health Check API
+ */
+export interface HealthStatus {
+  status: 'healthy' | 'unhealthy'
+  uptime: number
+  timestamp: string
+  services: {
+    database: 'healthy' | 'unhealthy'
+    redis?: 'healthy' | 'unhealthy'
+    externalApi?: 'healthy' | 'unhealthy'
+  }
+}
+
+export const healthApi = {
+  /**
+   * Get system health status
+   */
+  getHealth: async (): Promise<HealthStatus> => {
+    const response: AxiosResponse<HealthStatus> = await apiClient.get('/health')
+    return response.data
+  },
+}
+
+/**
  * React Query keys for consistent caching
  */
 export const queryKeys = {
@@ -274,5 +298,9 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.workCenters.details(), id] as const,
     statistics: () => [...queryKeys.workCenters.all, 'statistics'] as const,
     capacityMetrics: (workCenterId?: string) => [...queryKeys.workCenters.all, 'capacity', workCenterId] as const,
+  },
+  health: {
+    all: ['health'] as const,
+    basic: () => [...queryKeys.health.all, 'basic'] as const,
   },
 } as const

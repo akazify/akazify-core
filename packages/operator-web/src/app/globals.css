@@ -198,23 +198,23 @@
   /* Manufacturing-specific utilities */
   
   /* Equipment status colors */
-  .text-status-operational { @apply text-status-operational; }
-  .text-status-warning { @apply text-status-warning; }
-  .text-status-alarm { @apply text-status-alarm; }
-  .text-status-offline { @apply text-status-offline; }
-  .text-status-maintenance { @apply text-status-maintenance; }
+  .text-status-operational { color: #10b981; }
+  .text-status-warning { color: #f59e0b; }
+  .text-status-alarm { color: #ef4444; }
+  .text-status-offline { color: #6b7280; }
+  .text-status-maintenance { color: #8b5cf6; }
 
-  .bg-status-operational { @apply bg-status-operational; }
-  .bg-status-warning { @apply bg-status-warning; }
-  .bg-status-alarm { @apply bg-status-alarm; }
-  .bg-status-offline { @apply bg-status-offline; }
-  .bg-status-maintenance { @apply bg-status-maintenance; }
+  .bg-status-operational { background-color: #10b981; }
+  .bg-status-warning { background-color: #f59e0b; }
+  .bg-status-alarm { background-color: #ef4444; }
+  .bg-status-offline { background-color: #6b7280; }
+  .bg-status-maintenance { background-color: #8b5cf6; }
 
   /* Hierarchy colors */
-  .text-hierarchy-site { @apply text-hierarchy-site; }
-  .text-hierarchy-area { @apply text-hierarchy-area; }
-  .text-hierarchy-workCenter { @apply text-hierarchy-workCenter; }
-  .text-hierarchy-equipment { @apply text-hierarchy-equipment; }
+  .text-hierarchy-site { color: #0066cc; }
+  .text-hierarchy-area { color: #7c3aed; }
+  .text-hierarchy-workCenter { color: #059669; }
+  .text-hierarchy-equipment { color: #dc2626; }
 
   /* Scroll utilities for long manufacturing lists */
   .scroll-area {
