@@ -14,6 +14,12 @@ import { createRedisClient, testRedisConnection, CacheService } from './config/r
 // Route imports
 import sitesRoutes from './routes/sites';
 import workCentersRoutes from './routes/workCenters';
+import manufacturingOrdersRoutes from './routes/manufacturingOrders';
+import manufacturingOrderOperationsRoutes from './routes/manufacturingOrderOperations';
+import qualityChecksRoutes from './routes/qualityChecks';
+import laborTrackingRoutes from './routes/laborTracking';
+import materialConsumptionRoutes from './routes/materialConsumption';
+import nonConformanceRoutes from './routes/nonConformance';
 
 /**
  * Server configuration interface
@@ -71,8 +77,10 @@ async function registerPlugins(server: FastifyInstance, config: ServerConfig): P
   });
 
   await server.register(fastifyCors, {
-    origin: config.environment === 'development' ? true : /akazify\.com$/,
+    origin: config.environment === 'development' ? ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'] : /akazify\.com$/,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
   });
 
   // Database connection
@@ -190,6 +198,24 @@ async function registerRoutes(server: FastifyInstance): Promise<void> {
     
     // Work Centers routes
     await fastify.register(workCentersRoutes);
+    
+    // Manufacturing Orders routes
+    await fastify.register(manufacturingOrdersRoutes);
+    
+    // Manufacturing Order Operations routes
+    await fastify.register(manufacturingOrderOperationsRoutes);
+    
+    // Quality Checks routes
+    await fastify.register(qualityChecksRoutes);
+    
+    // Labor Tracking routes
+    await fastify.register(laborTrackingRoutes);
+    
+    // Material Consumption routes
+    await fastify.register(materialConsumptionRoutes);
+    
+    // Non-conformance routes
+    await fastify.register(nonConformanceRoutes);
     
   }, { prefix: '/api/v1' });
 }
