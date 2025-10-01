@@ -320,6 +320,179 @@ export const areasApi = {
 }
 
 /**
+ * Manufacturing Orders API
+ */
+export interface ManufacturingOrder {
+  id: string
+  orderNumber: string
+  productId: string
+  productName?: string
+  quantity: number
+  uom: string
+  bomId?: string
+  routingId?: string
+  plannedStartDate: string
+  plannedEndDate: string
+  actualStartDate?: string
+  actualEndDate?: string
+  status: 'PLANNED' | 'RELEASED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
+  priority: number
+  notes?: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  version: number
+}
+
+export interface ManufacturingOrderFilters {
+  status?: 'PLANNED' | 'RELEASED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
+  productId?: string
+  priority?: number
+}
+
+export const manufacturingOrdersApi = {
+  /**
+   * Get all manufacturing orders
+   */
+  getAll: async (filters: ManufacturingOrderFilters = {}): Promise<PaginatedResponse<ManufacturingOrder>> => {
+    const response: AxiosResponse<PaginatedResponse<ManufacturingOrder>> = await apiClient.get('/manufacturing-orders', {
+      params: filters,
+    })
+    return response.data
+  },
+
+  /**
+   * Get MO statistics
+   */
+  getStatistics: async (): Promise<{
+    total: number
+    byStatus: { status: string; count: number }[]
+    overdue: number
+    avgLeadTime: number
+  }> => {
+    const response = await apiClient.get('/manufacturing-orders/statistics')
+    return response.data
+  },
+
+  /**
+   * Get MO by ID
+   */
+  getById: async (id: string): Promise<ManufacturingOrder> => {
+    const response: AxiosResponse<ManufacturingOrder> = await apiClient.get(`/manufacturing-orders/${id}`)
+    return response.data
+  },
+
+  /**
+   * Create new manufacturing order
+   */
+  create: async (data: Omit<ManufacturingOrder, 'id' | 'orderNumber' | 'createdAt' | 'updatedAt' | 'version'>): Promise<ManufacturingOrder> => {
+    console.log('🌐 API call data:', JSON.stringify(data, null, 2))
+    const response: AxiosResponse<ManufacturingOrder> = await apiClient.post('/manufacturing-orders', data)
+    return response.data
+  },
+
+  /**
+   * Update manufacturing order
+   */
+  update: async (id: string, data: Partial<Omit<ManufacturingOrder, 'id' | 'orderNumber' | 'createdAt' | 'updatedAt' | 'version'>>): Promise<ManufacturingOrder> => {
+    const response: AxiosResponse<ManufacturingOrder> = await apiClient.put(`/manufacturing-orders/${id}`, data)
+    return response.data
+  },
+
+  /**
+   * Update MO status with lifecycle validation
+   */
+  updateStatus: async (id: string, status: ManufacturingOrder['status']): Promise<ManufacturingOrder> => {
+    const response: AxiosResponse<ManufacturingOrder> = await apiClient.put(`/manufacturing-orders/${id}/status`, { status })
+    return response.data
+  },
+
+  /**
+   * Delete manufacturing order
+   */
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete(`/manufacturing-orders/${id}`)
+  },
+}
+
+/**
+ * Manufacturing Order Operations API
+ */
+export const manufacturingOrderOperationsApi = {
+  /**
+   * Get operations for a manufacturing order
+   */
+  getByManufacturingOrder: async (manufacturingOrderId: string): Promise<any[]> => {
+    const response = await apiClient.get('/mo-operations', {
+      params: { manufacturingOrderId }
+    })
+    return response.data.data || []
+  },
+
+  /**
+   * Get operation by ID
+   */
+  getById: async (operationId: string): Promise<any> => {
+    const response = await apiClient.get(`/mo-operations/${operationId}`)
+    return response.data
+  },
+
+  /**
+   * Create new operation
+   */
+  create: async (data: {
+    manufacturingOrderId: string
+    workCenterId: string
+    operationId: string
+    sequence: number
+    plannedQuantity: number
+    plannedStartTime?: string
+    plannedEndTime?: string
+  }): Promise<any> => {
+    const response = await apiClient.post('/mo-operations', data)
+    return response.data
+  },
+
+  /**
+   * Update operation
+   */
+  update: async (operationId: string, data: {
+    workCenterId?: string
+    operationId?: string
+    sequence?: number
+    plannedQuantity?: number
+    plannedStartTime?: string
+    plannedEndTime?: string
+  }): Promise<any> => {
+    const response = await apiClient.put(`/mo-operations/${operationId}`, data)
+    return response.data
+  },
+
+  /**
+   * Delete operation
+   */
+  delete: async (operationId: string): Promise<void> => {
+    await apiClient.delete(`/mo-operations/${operationId}`)
+  },
+
+  /**
+   * Update operation status
+   */
+  updateStatus: async (operationId: string, status: 'WAITING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED'): Promise<any> => {
+    const response = await apiClient.put(`/mo-operations/${operationId}/status`, { status })
+    return response.data
+  },
+
+  /**
+   * Update operation quantity
+   */
+  updateQuantity: async (operationId: string, completedQuantity: number): Promise<any> => {
+    const response = await apiClient.put(`/mo-operations/${operationId}/quantity`, { completedQuantity })
+    return response.data
+  },
+}
+
+/**
  * Health Check API
  */
 export interface HealthStatus {
@@ -369,6 +542,14 @@ export const queryKeys = {
     bySite: (siteId: string) => [...queryKeys.areas.all, 'site', siteId] as const,
     list: (siteId: string, filters: AreaFilters) => [...queryKeys.areas.bySite(siteId), 'list', filters] as const,
     detail: (siteId: string, areaId: string) => [...queryKeys.areas.bySite(siteId), 'detail', areaId] as const,
+  },
+  manufacturingOrders: {
+    all: ['manufacturing-orders'] as const,
+    lists: () => [...queryKeys.manufacturingOrders.all, 'list'] as const,
+    list: (filters: ManufacturingOrderFilters) => [...queryKeys.manufacturingOrders.lists(), filters] as const,
+    details: () => [...queryKeys.manufacturingOrders.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.manufacturingOrders.details(), id] as const,
+    statistics: () => [...queryKeys.manufacturingOrders.all, 'statistics'] as const,
   },
   health: {
     all: ['health'] as const,
