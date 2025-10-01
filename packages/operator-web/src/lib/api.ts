@@ -517,7 +517,133 @@ export const healthApi = {
 }
 
 /**
- * React Query keys for consistent caching
+ * Quality Checks API
+ */
+export interface QualityCheck {
+  id: string
+  checkId: string
+  manufacturingOrderId: string
+  operationId?: string
+  workCenterId?: string
+  name: string
+  description?: string
+  type: 'VISUAL' | 'DIMENSIONAL' | 'FUNCTIONAL' | 'MATERIAL' | 'SAFETY' | 'CUSTOM'
+  specification?: string
+  tolerance?: string
+  unit?: string
+  targetValue?: number
+  minValue?: number
+  maxValue?: number
+  status: 'PENDING' | 'IN_PROGRESS' | 'PASSED' | 'FAILED' | 'SKIPPED'
+  sequence: number
+  isRequired: boolean
+  result?: 'PASS' | 'FAIL' | 'CONDITIONAL_PASS' | 'NOT_APPLICABLE'
+  measuredValue?: number
+  notes?: string
+  plannedStartTime?: string
+  actualStartTime?: string
+  plannedEndTime?: string
+  actualEndTime?: string
+  inspectorId?: string
+  inspectorName?: string
+  requiresSecondCheck: boolean
+  secondCheckBy?: string
+  secondCheckResult?: 'PASS' | 'FAIL' | 'CONDITIONAL_PASS' | 'NOT_APPLICABLE'
+  nonConformanceId?: string
+  correctiveAction?: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  version: number
+}
+
+export const qualityChecksApi = {
+  /**
+   * Get quality checks by manufacturing order
+   */
+  getByManufacturingOrder: async (manufacturingOrderId: string): Promise<QualityCheck[]> => {
+    const response = await apiClient.get(`/quality-checks`, {
+      params: { manufacturingOrderId }
+    })
+    return response.data.data || []
+  },
+
+  /**
+   * Get quality checks by operation
+   */
+  getByOperation: async (operationId: string): Promise<QualityCheck[]> => {
+    const response = await apiClient.get(`/quality-checks`, {
+      params: { operationId }
+    })
+    return response.data.data || []
+  },
+
+  /**
+   * Get quality check by ID
+   */
+  getById: async (id: string): Promise<QualityCheck> => {
+    const response = await apiClient.get(`/quality-checks/${id}`)
+    return response.data
+  },
+
+  /**
+   * Create quality check
+   */
+  create: async (data: {
+    checkId: string
+    manufacturingOrderId: string
+    operationId?: string
+    workCenterId?: string
+    name: string
+    description?: string
+    type: 'VISUAL' | 'DIMENSIONAL' | 'FUNCTIONAL' | 'MATERIAL' | 'SAFETY' | 'CUSTOM'
+    specification?: string
+    tolerance?: string
+    unit?: string
+    targetValue?: number
+    minValue?: number
+    maxValue?: number
+    sequence: number
+    isRequired?: boolean
+    plannedStartTime?: string
+    plannedEndTime?: string
+  }): Promise<QualityCheck> => {
+    const response = await apiClient.post('/quality-checks', data)
+    return response.data
+  },
+
+  /**
+   * Update quality check status (Start inspection)
+   */
+  updateStatus: async (id: string, status: 'PENDING' | 'IN_PROGRESS' | 'PASSED' | 'FAILED' | 'SKIPPED'): Promise<QualityCheck> => {
+    const response = await apiClient.put(`/quality-checks/${id}/status`, { status })
+    return response.data
+  },
+
+  /**
+   * Record inspection results
+   */
+  recordResult: async (id: string, data: {
+    result: 'PASS' | 'FAIL' | 'CONDITIONAL_PASS' | 'NOT_APPLICABLE'
+    measuredValue?: number
+    notes?: string
+    inspectorId?: string
+    inspectorName?: string
+  }): Promise<QualityCheck> => {
+    const response = await apiClient.put(`/quality-checks/${id}/result`, data)
+    return response.data
+  },
+
+  /**
+   * Delete quality check
+   */
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete(`/quality-checks/${id}`)
+  },
+}
+
+/**
+ * Query Keys for React Query cache management
  */
 export const queryKeys = {
   sites: {
@@ -554,5 +680,12 @@ export const queryKeys = {
   health: {
     all: ['health'] as const,
     basic: () => [...queryKeys.health.all, 'basic'] as const,
+  },
+  qualityChecks: {
+    all: ['quality-checks'] as const,
+    lists: () => [...queryKeys.qualityChecks.all, 'list'] as const,
+    byOperation: (operationId: string) => [...queryKeys.qualityChecks.all, 'operation', operationId] as const,
+    byManufacturingOrder: (moId: string) => [...queryKeys.qualityChecks.all, 'mo', moId] as const,
+    detail: (id: string) => [...queryKeys.qualityChecks.all, 'detail', id] as const,
   },
 } as const

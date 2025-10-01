@@ -1,10 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { qualityChecksApi, queryKeys, type QualityCheck } from '@/lib/api'
 import { 
   CheckCircle, 
   XCircle, 
@@ -17,90 +20,9 @@ import {
   Play
 } from 'lucide-react'
 
-// Mock quality checks data
-const sampleQualityChecks = [
-  {
-    id: '1',
-    checkId: 'VISUAL-001',
-    name: 'Visual Inspection',
-    description: 'Check for visual defects, scratches, and surface quality',
-    type: 'VISUAL' as const,
-    specification: 'No visible defects',
-    status: 'PASSED' as const,
-    result: 'PASS' as const,
-    sequence: 1,
-    isRequired: true,
-    inspectorName: 'John Smith',
-    actualStartTime: '2025-09-23T08:25:00Z',
-    actualEndTime: '2025-09-23T08:28:00Z',
-    notes: 'Surface quality excellent, no defects found'
-  },
-  {
-    id: '2',
-    checkId: 'DIM-001',
-    name: 'Dimensional Check',
-    description: 'Measure critical dimensions with calipers',
-    type: 'DIMENSIONAL' as const,
-    specification: '100mm ± 0.1mm',
-    tolerance: '±0.1mm',
-    unit: 'mm',
-    targetValue: 100,
-    minValue: 99.9,
-    maxValue: 100.1,
-    measuredValue: 99.95,
-    status: 'IN_PROGRESS' as const,
-    result: undefined,
-    sequence: 2,
-    isRequired: true,
-    inspectorName: 'Sarah Johnson',
-    actualStartTime: '2025-09-23T08:30:00Z',
-    actualEndTime: undefined,
-    notes: undefined
-  },
-  {
-    id: '3',
-    checkId: 'FUNC-001',
-    name: 'Function Test',
-    description: 'Test operational functionality',
-    type: 'FUNCTIONAL' as const,
-    specification: 'All functions must operate within spec',
-    status: 'PENDING' as const,
-    result: undefined,
-    sequence: 3,
-    isRequired: true,
-    inspectorName: undefined,
-    actualStartTime: undefined,
-    actualEndTime: undefined,
-    notes: undefined
-  }
-]
-
 type QualityCheckStatus = 'PENDING' | 'IN_PROGRESS' | 'PASSED' | 'FAILED' | 'SKIPPED'
 type QualityCheckResult = 'PASS' | 'FAIL' | 'CONDITIONAL_PASS' | 'NOT_APPLICABLE'
 type QualityCheckType = 'VISUAL' | 'DIMENSIONAL' | 'FUNCTIONAL' | 'MATERIAL' | 'SAFETY' | 'CUSTOM'
-
-interface QualityCheck {
-  id: string
-  checkId: string
-  name: string
-  description: string
-  type: QualityCheckType
-  specification: string
-  tolerance?: string
-  unit?: string
-  targetValue?: number
-  minValue?: number
-  maxValue?: number
-  measuredValue?: number
-  status: QualityCheckStatus
-  result?: QualityCheckResult
-  sequence: number
-  isRequired: boolean
-  inspectorName?: string
-  actualStartTime?: string
-  actualEndTime?: string
-  notes?: string
-}
 
 interface QualityChecksPanelProps {
   operationId?: string
@@ -108,13 +30,60 @@ interface QualityChecksPanelProps {
 }
 
 export function QualityChecksPanel({ 
-  operationId = '2',
-  manufacturingOrderId = '1' 
+  operationId,
+  manufacturingOrderId
 }: QualityChecksPanelProps) {
-  const [checks] = useState<QualityCheck[]>(sampleQualityChecks)
+  const queryClient = useQueryClient()
   const [selectedCheck, setSelectedCheck] = useState<string | null>(null)
   const [measuredValue, setMeasuredValue] = useState<string>('')
   const [notes, setNotes] = useState<string>('')
+
+  // Fetch quality checks from API
+  const { data: checks = [], isLoading } = useQuery({
+    queryKey: operationId 
+      ? queryKeys.qualityChecks.byOperation(operationId)
+      : manufacturingOrderId 
+      ? queryKeys.qualityChecks.byManufacturingOrder(manufacturingOrderId)
+      : queryKeys.qualityChecks.lists(),
+    queryFn: () => {
+      if (operationId) {
+        return qualityChecksApi.getByOperation(operationId)
+      } else if (manufacturingOrderId) {
+        return qualityChecksApi.getByManufacturingOrder(manufacturingOrderId)
+      }
+      return Promise.resolve([])
+    },
+    enabled: !!(operationId || manufacturingOrderId),
+  })
+
+  // Mutation for updating status (Start inspection)
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ checkId, status }: { checkId: string; status: QualityCheckStatus }) =>
+      qualityChecksApi.updateStatus(checkId, status),
+    onSuccess: () => {
+      if (operationId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.qualityChecks.byOperation(operationId) })
+      } else if (manufacturingOrderId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.qualityChecks.byManufacturingOrder(manufacturingOrderId) })
+      }
+    },
+  })
+
+  // Mutation for recording results
+  const recordResultMutation = useMutation({
+    mutationFn: ({ checkId, data }: { checkId: string; data: any }) =>
+      qualityChecksApi.recordResult(checkId, data),
+    onSuccess: () => {
+      if (operationId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.qualityChecks.byOperation(operationId) })
+      } else if (manufacturingOrderId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.qualityChecks.byManufacturingOrder(manufacturingOrderId) })
+      }
+      setSelectedCheck(null)
+      setMeasuredValue('')
+      setNotes('')
+    },
+  })
 
   const getStatusColor = (status: QualityCheckStatus) => {
     switch (status) {
@@ -170,16 +139,32 @@ export function QualityChecksPanel({
   const overallProgress = (passedChecks + failedChecks) / totalChecks * 100
 
   const handleStartInspection = (checkId: string) => {
-    console.log(`Starting inspection for ${checkId}`)
-    // Would call API to update status to IN_PROGRESS
+    updateStatusMutation.mutate({ checkId, status: 'IN_PROGRESS' })
   }
 
   const handleRecordResult = (checkId: string, result: QualityCheckResult) => {
-    console.log(`Recording result for ${checkId}: ${result}`, { measuredValue, notes })
-    // Would call API to record inspection results
-    setSelectedCheck(null)
-    setMeasuredValue('')
-    setNotes('')
+    recordResultMutation.mutate({
+      checkId,
+      data: {
+        result,
+        measuredValue: measuredValue ? parseFloat(measuredValue) : undefined,
+        notes,
+      }
+    })
+  }
+
+  if (isLoading) {
+    return <LoadingSpinner />
+  }
+
+  if (!checks || checks.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-gray-500">
+          No quality checks defined for this operation.
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
