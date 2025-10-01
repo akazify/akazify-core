@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { Type } from '@fastify/type-provider-typebox';
 import { ManufacturingOrderRepository } from '../repositories/manufacturingOrder.repository';
+import { ManufacturingOrderOperationRepository } from '../repositories/manufacturingOrderOperation.repository';
 import { ManufacturingOrderSchema } from '@akazify/core-domain';
 import { z } from 'zod';
 
@@ -113,6 +114,7 @@ const ManufacturingOrderStatisticsSchema = Type.Object({
  */
 export default async function manufacturingOrdersRoutes(fastify: FastifyInstance) {
   const moRepository = new ManufacturingOrderRepository(fastify.pg.pool);
+  const moOpRepository = new ManufacturingOrderOperationRepository(fastify.pg.pool);
 
   // GET /manufacturing-orders - List manufacturing orders with filtering
   fastify.get('/manufacturing-orders', {
@@ -383,6 +385,23 @@ export default async function manufacturingOrdersRoutes(fastify: FastifyInstance
     try {
       const { id } = request.params;
       const { status } = request.body;
+
+      // Validate that all operations are completed before marking order as COMPLETED
+      if (status === 'COMPLETED') {
+        const operations = await moOpRepository.getByManufacturingOrder(id);
+        
+        if (operations.length > 0) {
+          const allCompleted = operations.every(op => op.status === 'COMPLETED');
+          
+          if (!allCompleted) {
+            const incompleteCount = operations.filter(op => op.status !== 'COMPLETED').length;
+            return reply.code(400).send({
+              error: 'Validation Error',
+              message: `Cannot complete manufacturing order - ${incompleteCount} operation(s) are not completed. All operations must be completed before the order can be marked as COMPLETED.`
+            });
+          }
+        }
+      }
 
       const updatedMO = await moRepository.updateStatus(id, status);
       

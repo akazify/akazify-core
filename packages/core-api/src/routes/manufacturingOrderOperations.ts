@@ -323,9 +323,22 @@ export default async function manufacturingOrderOperationsRoutes(fastify: Fastif
     try {
       const opData = request.body;
 
+      // If sequence not provided or is 0, auto-assign next sequence
+      let sequence = opData.sequence;
+      if (!sequence || sequence === 0) {
+        const existingOps = await moOpRepository.findByManufacturingOrderId(opData.manufacturingOrderId);
+        sequence = existingOps.length > 0 
+          ? Math.max(...existingOps.map(op => op.sequence)) + 10
+          : 10; // Start at 10 (010)
+      }
+
       // Validate and process data
       const validatedData = {
-        ...opData,
+        manufacturingOrderId: opData.manufacturingOrderId,
+        workCenterId: opData.workCenterId,
+        operationId: opData.operationId,
+        sequence,
+        plannedQuantity: opData.plannedQuantity,
         plannedStartTime: opData.plannedStartTime ? new Date(opData.plannedStartTime) : undefined,
         plannedEndTime: opData.plannedEndTime ? new Date(opData.plannedEndTime) : undefined,
         status: 'WAITING' as const,
@@ -336,10 +349,27 @@ export default async function manufacturingOrderOperationsRoutes(fastify: Fastif
       const newOperation = await moOpRepository.create(validatedData);
       return reply.code(201).send(newOperation);
     } catch (error) {
-      fastify.log.error(error);
+      fastify.log.error('Error creating operation:', error);
+      
+      // Check for unique constraint violation
+      if (error.code === '23505') {
+        return reply.code(409).send({
+          error: 'Conflict',
+          message: 'An operation with this sequence already exists for this manufacturing order'
+        });
+      }
+      
+      // Check for foreign key violation
+      if (error.code === '23503') {
+        return reply.code(400).send({
+          error: 'Bad Request',
+          message: 'Invalid manufacturingOrderId or workCenterId - referenced record does not exist'
+        });
+      }
+      
       return reply.code(500).send({ 
         error: 'Internal Server Error',
-        message: 'Failed to create operation'
+        message: error.message || 'Failed to create operation'
       });
     }
   });
